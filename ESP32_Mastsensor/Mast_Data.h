@@ -32,4 +32,5 @@ struct Mast_Sensoren {
 
 extern Mast_Sensoren mastdaten;
 
+
 #endif

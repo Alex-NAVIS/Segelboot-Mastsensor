@@ -8,3 +8,4 @@
 // ----------------------------------------------------------
 void setupWindrichtung();
 void readWindRichtung();
+void calibrateWindToNorth();

@@ -80,3 +80,5 @@ void saveConfig();
 // ==========================================================
 #define WIND_I2C_SDA 18  // Default – kann in Config überschrieben werden
 #define WIND_I2C_SCL 19
+// Offset des AS5600 Sensors ausgerichtet auf den Bug des Schiffes
+extern float WIND_OFFSET; // Dein mechanischer Versatz in Grad

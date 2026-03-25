@@ -1,122 +1,159 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mast ESP32 Setup</title>
-<style>
-    body { background-color: #001a26; color: #00e6e6; font-family: "Segoe UI", Arial, sans-serif; margin:0; padding:0; text-align:center;}
-    header { background-color: #002b3a; color:#00ffff; padding:15px; font-size:1.6em; font-weight:bold; border-bottom:2px solid #005566;}
-    h2.section-title { color:#00ffff; margin-top:20px; font-size:1.3em; border-bottom:1px solid #007a99; display:inline-block; padding-bottom:4px;}
-    form { margin:20px auto; width:90%; max-width:400px; text-align:left;}
-    label { display:block; margin-top:10px; color:#00e6e6;}
-    input, select { width:100%; padding:8px; margin-top:5px; border-radius:5px; border:1px solid #007a99; background:#003d52; color:#ffffff;}
-    button { margin-top:15px; padding:10px 20px; width:100%; background:#007BFF; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;}
-    button:hover { background:#00b8d4; color:#001a26; }
-    .status { margin-top:10px; font-weight:bold; color:#00ffcc; text-align:center;}
-	.sensor-box {
-    background-color: #003d52;
-    border: 1px solid #007a99;
-    border-radius: 10px;
-    padding: 10px;
-    margin-top: 15px;
-    display: flex;
-    flex-direction: column; /* Alles untereinander */
-    gap: 8px;               /* Abstand zwischen Feldern */
-	}
-	.sensor-box div { margin:5px 0; }
-	input[type="number"], input[type="password"], select {
-    width: 100%;
-    padding: 6px 8px;
-    margin-top: 5px;
-    border-radius: 5px;
-    border: 1px solid #007a99;
-    background: #003d52;
-    color: #ffffff;
-    box-sizing: border-box; /* Wichtig für volle Breite innerhalb der Box */
-    font-size: 1em;
-	}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mast ESP32 Setup</title>
+  <style>
+    body { background-color: #001a26; color: #00e6e6; font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; text-align: center; }
+    header { background-color: #002b3a; color: #00ffff; padding: 20px; font-size: 1.6em; font-weight: bold; border-bottom: 2px solid #005566; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    h2.section-title { color: #00ffff; margin: 10px 0 20px 0; font-size: 1.2em; border-bottom: 1px solid #007a99; display: inline-block; padding-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .container { width: 95%; max-width: 450px; margin: 20px auto; }
+    .card { background: #002b3a; border: 1px solid #005566; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: left; }
+    label { display: block; margin-top: 12px; color: #00e6e6; font-size: 0.9em; font-weight: bold; }
+    input, select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #007a99; background: #003d52; color: #ffffff; box-sizing: border-box; font-size: 1em; }
+    button { margin-top: 20px; padding: 12px; width: 100%; background: #007BFF; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s; }
+    button:hover { background: #00b8d4; color: #001a26; transform: translateY(-1px); }
+    .status { margin: 15px 0; font-weight: bold; color: #00ffcc; min-height: 1.2em; }
+    .sensor-group { background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 12px; margin-top: 15px; border-left: 3px solid #007a99; }
+    .sensor-group strong { display: block; margin-bottom: 8px; color: #00ffff; font-size: 0.95em; }
+    .fileupdatebtn { display: block; text-align: center; padding: 12px; background: linear-gradient(135deg, #1a2a35 0%, #003d52 100%); color: #00d4ff; text-decoration: none; font-weight: 600; border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.3); transition: 0.3s; margin-top: 10px; }
+    .fileupdatebtn:hover { background: #00bcd4; color: #0f1218; box-shadow: 0 0 15px rgba(0, 212, 255, 0.4); }
+    footer { margin: 40px auto 20px; padding: 15px; border-top: 1px solid #005566; color: #00b8d4; font-size: 0.85em; width: 90%; max-width: 450px; line-height: 1.5; }
+  </style>
 </head>
 <body>
+
 <header>Mast ESP32 Setup</header>
 
-<h2 class="section-title">WLAN & Mast Sensor Einstellungen</h2>
+<div class="container">
+    <!-- BOX 1: WLAN & Basis -->
+    <div class="card">
+        <h2 class="section-title">Verbindung</h2>
+        <form id="configForm">
+			<!-- WLAN SSID PW -->
+			<div class="sensor-group">
+				<label for="ssid">WLAN SSID</label>
+				<select id="ssid"><option>Suche Netzwerke...</option></select>
 
-<form id="configForm">
-    <label for="ssid">WLAN SSID</label>
-    <select id="ssid"></select>
+				<label for="password">WLAN Passwort</label>
+				<input type="password" id="password" placeholder="Passwort eingeben">
 
-    <label for="password">WLAN Passwort</label>
-    <input type="password" id="password" placeholder="Passwort">
+				<label for="port">Ziel-Port (Server)</label>
+				<input type="number" id="port" value="80">
+			</div>
 
-    <label for="port">Ziel-Port</label>
-    <input type="number" id="port" value="80">
+            <!-- Unter-Boxen für Intervalle -->
+            <div class="sensor-group">
+				<h2 class="section-title">Wind & GPS Sensoren</h2>
+                <label>Geschwindigkeit messen / ms</label>
+                <input type="number" id="windSpeedInterval" value="250">
+                <label>Windrichtung messen / ms</label>
+                <input type="number" id="windDirInterval" value="50">
+                <label>GPS Abfrage / ms</label>
+                <input type="number" id="gpsInterval" value="250">
+            </div>
+            <div class="sensor-group">
+				<h2 class="section-title">Sendeintervall zum Main Core</h2>
+                <label>Sensordaten senden / ms</label>
+                <input type="number" id="sendInterval" value="500">
+            </div>
 
-    <div class="sensor-box">
-        <div><strong>Wind-Sensoren Abfrageintervall (ms)</strong></div>
-        <label for="windSpeedInterval">Geschwindigkeit</label>
-        <input type="number" id="windSpeedInterval" value="250">
-        <label for="windDirInterval">Richtung</label>
-        <input type="number" id="windDirInterval" value="250">
+            <button type="submit">Speichern & Neustart</button>
+			<div class="status" id="status">Bereit</div>
+        </form>
     </div>
 
-    <div class="sensor-box">
-        <div><strong>GPS Abfrageintervall (ms)</strong></div>
-        <input type="number" id="gpsInterval" value="250">
+	<!-- BOX 2: Kalibrierung -->
+    <div class="card" style="text-align: center;">
+		<div class="sensor-group" style="border-left: 3px solid #28a745;">
+			<h2 class="section-title">Windfahne Justieren</h2>
+			<p style="color: #aaa; font-size: 0.85rem; margin-bottom: 15px;">
+				Richte die Windfahne exakt auf den <strong>Bug (vorne)</strong> aus und drücke den Button.
+			</p>
+			<!-- type="button" hinzugefügt -->
+			<button type="button" onclick="calibrateWind()" style="background: #28a745;">Auf Bug (0°) setzen</button>
+			<div id="calibStatus" class="status"></div>
+		</div>
+	</div>
+	
+    <!-- BOX 3: File Manager -->
+    <div class="card" style="text-align: center;">
+        <h2 class="section-title">System</h2>
+        <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 15px;">
+            Verwalte die Dateien auf dem internen Speicher des ESP32.
+        </p>
+        <a href="upload.html" class="fileupdatebtn">Datei Manager öffnen</a>
     </div>
+</div>
 
-    <div class="sensor-box">
-        <div><strong>Mastdaten Sendeintervall (ms)</strong></div>
-        <input type="number" id="sendInterval" value="500">
-    </div>
-
-    <button type="submit">Speichern & Neustart</button>
-</form>
-
-<div class="status" id="status"></div>
+<footer>
+    <strong>NAVIS & Alex Mastsensor v1.1</strong><br>
+    Entwickelt von <span style="color:#00ffff;">Alex</span> & <span style="color:#00ffff;">NAVIS</span><br>
+    © 2025 – System ESP32
+</footer>
 
 <script>
-// WLAN Scan
-function scanWifi() {
-    fetch('/scan')
-        .then(res => res.json())
-        .then(data => {
-            const ssidSelect = document.getElementById('ssid');
-            ssidSelect.innerHTML = "";
-            data.forEach(ssid => {
-                const option = document.createElement('option');
-                option.value = ssid;
-                option.textContent = ssid;
-                ssidSelect.appendChild(option);
-            });
-        })
-        .catch(err => console.error("Scan fehlgeschlagen", err));
-}
+  const setStatus = (msg) => document.getElementById('status').textContent = msg;
 
-// Form Submit
-document.getElementById('configForm').addEventListener('submit', function(e){
+  async function calibrateWind() {
+    const status = document.getElementById('calibStatus');
+    if(!confirm("Steht die Windfahne exakt geradeaus Richtung Bug?")) return;
+    
+    status.textContent = "Kalibriere...";
+    try {
+      const res = await fetch('/calibrate');
+      const text = await res.text();
+      status.textContent = "✅ " + text;
+      // Nach 5 Sekunden Status-Meldung löschen
+      setTimeout(() => status.textContent = "", 5000);
+    } catch (err) {
+      status.textContent = "❌ Fehler: " + err.message;
+    }
+  }
+
+  async function scanWifi() {
+    try {
+      const res = await fetch('/scan');
+      const data = await res.json();
+      const ssidSelect = document.getElementById('ssid');
+      ssidSelect.innerHTML = data.length ? "" : "<option>Keine Netzwerke gefunden</option>";
+      data.forEach(ssid => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = ssid;
+        ssidSelect.appendChild(opt);
+      });
+    } catch (err) {
+      setStatus("WLAN-Scan fehlgeschlagen.");
+    }
+  }
+
+  document.getElementById('configForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    setStatus("Speichere...");
     const payload = {
-        ssid: document.getElementById('ssid').value,
-        password: document.getElementById('password').value,
-        port: parseInt(document.getElementById('port').value),
-        windSpeedInterval: parseInt(document.getElementById('windSpeedInterval').value),
-        windDirInterval: parseInt(document.getElementById('windDirInterval').value),
-        gpsInterval: parseInt(document.getElementById('gpsInterval').value),
-        sendInterval: parseInt(document.getElementById('sendInterval').value)
+      ssid: document.getElementById('ssid').value,
+      password: document.getElementById('password').value,
+      port: parseInt(document.getElementById('port').value) || 80,
+      windSpeedInterval: parseInt(document.getElementById('windSpeedInterval').value) || 250,
+      windDirInterval: parseInt(document.getElementById('windDirInterval').value) || 250,
+      gpsInterval: parseInt(document.getElementById('gpsInterval').value) || 250,
+      sendInterval: parseInt(document.getElementById('sendInterval').value) || 500
     };
-    fetch('/save', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(payload)
-    })
-    .then(res => res.text())
-    .then(txt => document.getElementById('status').textContent = txt)
-    .catch(err => document.getElementById('status').textContent = "Fehler: "+err);
-});
+    try {
+      const res = await fetch('/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      setStatus(await res.text() || "Gespeichert! Neustart...");
+    } catch (err) {
+      setStatus("Fehler: " + err.message);
+    }
+  });
 
-scanWifi();
+  window.addEventListener('DOMContentLoaded', scanWifi);
 </script>
+
 </body>
 </html>

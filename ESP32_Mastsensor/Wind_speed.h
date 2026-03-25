@@ -41,5 +41,4 @@ void setupWindEncoder();
 // Ergebnis wird in sensorData.windspeed_gemessen gespeichert.
 // ----------------------------------------------------------
 void readWindEncoder();
-
 #endif

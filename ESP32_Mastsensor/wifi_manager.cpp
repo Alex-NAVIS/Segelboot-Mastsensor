@@ -94,15 +94,39 @@ void startAPMode() {
     if (DEBUG_MODE_WIFI) Serial.println("❌ Fehler beim Start des AP-Modus!");
     return;
   }
-
   IPAddress ip = WiFi.softAPIP();
-
   if (DEBUG_MODE_WIFI) {
     Serial.printf("AP gestartet. IP: %s\n", ip.toString().c_str());
     Serial.printf("AP-Status: %d\n", WiFi.status());
     Serial.printf("📡 AP aktiv: %s\n", AP_SSID);
     Serial.printf("➡ Passwort: %s\n", AP_PASSWORD);
     Serial.printf("➡ IP: %s\n", ip.toString().c_str());
+  }
+}
+
+
+// ------------------------------------------------------------
+// Dateisystem des  ESP erfassen und JSON mit Dateinamen erstellen.
+// ------------------------------------------------------------
+void listDir(fs::FS &fs, String dirname, String &json, bool &first) {
+  File root = fs.open(dirname);
+  if (!root || !root.isDirectory()) return;
+
+  File file = root.openNextFile();
+  while (file) {
+    if (!first) json += ",";
+    first = false;
+
+    json += "{\"name\":\"" + String(file.path()) + "\",";
+    json += "\"size\":" + String(file.size()) + ",";
+    json += "\"type\":\"" + String(file.isDirectory() ? "dir" : "file") + "\"}";
+
+    // Rekursion für Ordner
+    if (file.isDirectory()) {
+      listDir(fs, file.path(), json, first);
+    }
+
+    file = root.openNextFile();
   }
 }
 
@@ -131,6 +155,13 @@ void setupAPWebServer() {
     request->send(200, "application/json", json);
   });
 
+  // AS5600 Sensor auf den Bug ausrichten und calibrate
+  server->on("/calibrate", HTTP_GET, [](AsyncWebServerRequest *request) {
+    calibrateWindToNorth();  // Ruft deine neue Funktion auf
+    String msg = "Kalibrierung abgeschlossen. Neuer Offset: " + String(WIND_OFFSET, 2) + " Grad";
+    request->send(200, "text/plain", msg);
+  });
+
   // Save: wir erwarten JSON im Body -> on(..., HTTP_POST, onRequest, onUpload, onBody)
   // onRequest kann leer bleiben (hier: send z.B. 200), onUpload NULL, onBody = body-handler
   server->on(
@@ -148,10 +179,53 @@ void setupAPWebServer() {
     sendMastData(request);
   });
 
-  // Optional: einfache POST endpoint falls Mast sendet x-www-form-urlencoded (nicht JSON)
-  // server->on("/mastdata", HTTP_POST, [](AsyncWebServerRequest *request){ /*...*/ });
+  server->on(
+    "/upload", HTTP_POST,
+    [](AsyncWebServerRequest *request) {
+      if (request->_tempObject != nullptr) {
+        request->send(507, F("text/plain"), F("Fehler: Speicher voll oder Schreibfehler"));
+      } else {
+        request->send(200, F("text/plain"), F("Upload erfolgreich"));
+      }
+    },
+    [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+      if (index == 0) {
+        size_t freeSpace = LittleFS.totalBytes() - LittleFS.usedBytes();
+        if (request->contentLength() > freeSpace) {
+          request->_tempObject = (void *)1;
+          return;
+        }
+      }
+      if (request->_tempObject == nullptr) {
+        String path = "/" + filename;
+        File file = LittleFS.open(path, index == 0 ? "w" : "a");
+        if (file) {
+          if (file.write(data, len) != len) {
+            request->_tempObject = (void *)1;
+          }
+          file.close();
+        } else {
+          request->_tempObject = (void *)1;
+        }
+      }
+    });
 
-  // Falls du noch andere Endpunkte brauchst, hier ergänzen...
+  // Endpunkt für die Dateiliste (JSON)
+  server->on("/list_files", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String json = "[";
+    bool first = true;
+    listDir(LittleFS, "/", json, first);
+    // Speicherinfo anhängen
+    size_t total = LittleFS.totalBytes();
+    size_t used = LittleFS.usedBytes();
+    if (!first) json += ",";
+    json += "{\"fs_total\":" + String(total) + ",\"fs_used\":" + String(used) + "}";
+
+    json += "]";
+    request->send(200, "application/json", json);
+  });
+
+  server->serveStatic("/", LittleFS, "/").setDefaultFile("config.html");
 }
 
 
@@ -187,7 +261,7 @@ void handleSaveConfigRequest(AsyncWebServerRequest *request,
     return;
   }
 
-  if (DEBUG_MODE_WIFI)Serial.println("JSON OK → Werte übernehmen…");
+  if (DEBUG_MODE_WIFI) Serial.println("JSON OK → Werte übernehmen…");
 
   wifiConfig.ssid = doc["ssid"].as<String>();
   wifiConfig.password = doc["password"].as<String>();
