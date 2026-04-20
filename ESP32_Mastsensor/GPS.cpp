@@ -55,6 +55,14 @@ void setup_GPS() {
   // Serielle Schnittstelle starten (GPS_SERIAL_PORT = z.B. Serial1)
   GPS_SERIAL_PORT.begin(GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
 
+  // Befehl: Elevation Mask auf 15 Grad setzen (UBX Protokoll)
+  // Das zwingt den GPS-Chip, flache Satelliten intern zu ignorieren
+  if (GPS_AUSLESE) {
+    byte setNav[] = { 0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06, 0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00, 0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C, 0x01, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0xDC };
+    GPS_SERIAL_PORT.write(setNav, sizeof(setNav));
+    if (DEBUG_MODE_GPS) Serial.println(F("[GPS] Elevation Mask auf 15° gesetzt."));
+  }
+
   if (DEBUG_MODE_GPS) {
     Serial.print(F("[GPS] Port gestartet mit Baudrate: "));
     Serial.println(GPS_BAUDRATE);

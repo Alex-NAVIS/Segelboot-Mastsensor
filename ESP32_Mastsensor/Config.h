@@ -69,6 +69,8 @@ void saveConfig();
 
 // GPS AHRS true Stabilisierung false reine GPS Daten
 #define GPS_AHRS_SYSTEM true
+// GPS Satteliten unter 15° ausblenden
+#define GPS_AUSLESE false
 
 // ==========================================================
 // 6. Rotary Encoder (Windgeschwindigkeit)
@@ -81,4 +83,4 @@ void saveConfig();
 #define WIND_I2C_SDA 18  // Default – kann in Config überschrieben werden
 #define WIND_I2C_SCL 19
 // Offset des AS5600 Sensors ausgerichtet auf den Bug des Schiffes
-extern float WIND_OFFSET; // Dein mechanischer Versatz in Grad
+extern float WIND_OFFSET;  // Dein mechanischer Versatz in Grad
